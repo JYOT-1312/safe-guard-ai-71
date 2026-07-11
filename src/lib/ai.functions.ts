@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-3-flash-preview";
+const GATEWAY_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GATEWAY_STT = "https://ai.gateway.lovable.dev/v1/audio/transcriptions";
+const MODEL_CHAT = "google/gemini-3-flash-preview";
+const MODEL_STT = "openai/gpt-4o-mini-transcribe";
 
 const SYSTEM_PROMPT = `You are SurakshaSetu AI — a calm, warm digital banking safety companion for first-time Indian digital users.
 You help users identify UPI scams, phishing, fake loan apps, KYC fraud, QR fraud, and cyber threats.
@@ -11,12 +13,49 @@ Be concise. Use short sentences. When you spot a scam, be clear and firm: "This 
 Always end high-risk answers with 1-3 concrete next steps (freeze card, call 1930, report on cybercrime.gov.in).
 Never ask users to share OTPs, passwords, PINs, or CVVs.`;
 
+const ANALYSIS_INSTRUCTION = `Analyze the provided content (message text, image OCR, or voice transcript) for Indian banking / UPI / phishing / KYC / loan-app / QR scam risk.
+
+If input is an image, first perform OCR mentally and use that text.
+Extract EVERY suspicious URL, phone number, and UPI VPA (looks like name@bank) you can find.
+
+Return STRICT JSON only. No markdown, no code fences. Schema:
+{
+  "riskScore": number 0-100,
+  "confidence": number 0-100,
+  "riskLevel": "safe" | "caution" | "high",
+  "detectedScamType": string,
+  "extractedText": string (OCR/transcript verbatim, or "" if plain text was given),
+  "detectedLinks": string[],
+  "detectedPhoneNumbers": string[],
+  "detectedUPI": string[],
+  "suspiciousPhrases": string[] (max 6, verbatim snippets that triggered flags),
+  "redFlags": string[] (max 6, short human explanations),
+  "summary": string (2-3 short sentences, plain language),
+  "recommendation": string (one clear next-step sentence),
+  "recommendedActions": string[] (max 4, concrete steps)
+}`;
+
 const Msg = z.object({ role: z.enum(["user", "assistant"]), content: z.string() });
 
-async function callGateway(body: unknown): Promise<string> {
+type Analysis = {
+  riskScore: number; confidence: number;
+  riskLevel: "safe" | "caution" | "high";
+  detectedScamType: string;
+  extractedText: string;
+  detectedLinks: string[];
+  detectedPhoneNumbers: string[];
+  detectedUPI: string[];
+  suspiciousPhrases: string[];
+  redFlags: string[];
+  summary: string;
+  recommendation: string;
+  recommendedActions: string[];
+};
+
+async function callChat(body: unknown): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("Missing LOVABLE_API_KEY");
-  const res = await fetch(GATEWAY, {
+  const res = await fetch(GATEWAY_CHAT, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
     body: JSON.stringify(body),
@@ -31,11 +70,44 @@ async function callGateway(body: unknown): Promise<string> {
   return data.choices?.[0]?.message?.content ?? "";
 }
 
+function parseAnalysis(raw: string): Analysis {
+  const cleaned = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/, "").trim();
+  const fallback: Analysis = {
+    riskScore: 50, confidence: 40, riskLevel: "caution",
+    detectedScamType: "Unknown", extractedText: "",
+    detectedLinks: [], detectedPhoneNumbers: [], detectedUPI: [],
+    suspiciousPhrases: [], redFlags: [],
+    summary: cleaned.slice(0, 400),
+    recommendation: "If unsure, do not pay or share credentials. Call 1930.",
+    recommendedActions: ["Do not share OTPs, PINs or passwords.", "Report on cybercrime.gov.in if you have paid."],
+  };
+  try {
+    const p = JSON.parse(cleaned);
+    return {
+      riskScore: Math.max(0, Math.min(100, Number(p.riskScore ?? p.risk_score ?? 50))),
+      confidence: Math.max(0, Math.min(100, Number(p.confidence ?? 60))),
+      riskLevel: (["safe", "caution", "high"].includes(p.riskLevel) ? p.riskLevel : p.risk_level) ?? "caution",
+      detectedScamType: String(p.detectedScamType ?? p.scam_type ?? "Unknown"),
+      extractedText: String(p.extractedText ?? ""),
+      detectedLinks: Array.isArray(p.detectedLinks) ? p.detectedLinks.map(String) : [],
+      detectedPhoneNumbers: Array.isArray(p.detectedPhoneNumbers) ? p.detectedPhoneNumbers.map(String) : [],
+      detectedUPI: Array.isArray(p.detectedUPI) ? p.detectedUPI.map(String) : [],
+      suspiciousPhrases: Array.isArray(p.suspiciousPhrases) ? p.suspiciousPhrases.map(String) : [],
+      redFlags: Array.isArray(p.redFlags) ? p.redFlags.map(String) : (Array.isArray(p.red_flags) ? p.red_flags.map(String) : []),
+      summary: String(p.summary ?? p.explanation ?? ""),
+      recommendation: String(p.recommendation ?? ""),
+      recommendedActions: Array.isArray(p.recommendedActions) ? p.recommendedActions.map(String) : (Array.isArray(p.recommended_actions) ? p.recommended_actions.map(String) : []),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export const chatWithAI = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ messages: z.array(Msg).min(1).max(30) }).parse(d))
   .handler(async ({ data }) => {
-    const content = await callGateway({
-      model: MODEL,
+    const content = await callChat({
+      model: MODEL_CHAT,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...data.messages],
       temperature: 0.4,
     });
@@ -47,45 +119,86 @@ export const analyzeScam = createServerFn({ method: "POST" })
     text: z.string().max(6000).optional(),
     imageDataUrl: z.string().max(8_000_000).optional(),
   }).refine((v) => v.text || v.imageDataUrl, "Provide text or image").parse(d))
-  .handler(async ({ data }) => {
-    const userContent: Array<Record<string, unknown>> = [];
-    const instruction = `Analyze this content for banking / UPI / phishing / loan scam risk.
-Return STRICT JSON only with keys:
-{
-  "risk_score": number (0-100),
-  "risk_level": "safe" | "caution" | "high",
-  "scam_type": string,
-  "explanation": string (2-3 short sentences, plain language),
-  "red_flags": string[] (max 5, each short),
-  "recommended_actions": string[] (max 4, each concrete)
-}
-No markdown, no code fences. JSON only.`;
-    userContent.push({ type: "text", text: instruction });
+  .handler(async ({ data }): Promise<Analysis> => {
+    const userContent: Array<Record<string, unknown>> = [{ type: "text", text: ANALYSIS_INSTRUCTION }];
     if (data.text) userContent.push({ type: "text", text: `Content to analyze:\n${data.text}` });
     if (data.imageDataUrl) userContent.push({ type: "image_url", image_url: { url: data.imageDataUrl } });
 
-    const raw = await callGateway({
-      model: MODEL,
+    const raw = await callChat({
+      model: MODEL_CHAT,
       messages: [
         { role: "system", content: SYSTEM_PROMPT + "\nWhen asked to analyze, reply with strict JSON only." },
         { role: "user", content: userContent },
       ],
       temperature: 0.2,
     });
+    return parseAnalysis(raw);
+  });
 
-    const cleaned = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/, "").trim();
-    try {
-      const parsed = JSON.parse(cleaned);
-      return parsed as {
-        risk_score: number; risk_level: "safe" | "caution" | "high";
-        scam_type: string; explanation: string;
-        red_flags: string[]; recommended_actions: string[];
-      };
-    } catch {
+export const analyzeAudio = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    audioDataUrl: z.string().min(20).max(20_000_000),
+    mimeType: z.string().max(120).optional(),
+    language: z.string().max(8).optional(),
+  }).parse(d))
+  .handler(async ({ data }): Promise<Analysis & { transcript: string }> => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    // Decode data URL -> Blob
+    const m = /^data:([^;]+);base64,(.+)$/.exec(data.audioDataUrl);
+    if (!m) throw new Error("Invalid audio payload");
+    const mime = data.mimeType || m[1] || "audio/webm";
+    const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+    const extMap: Record<string, string> = {
+      "audio/webm": "webm", "audio/mp4": "mp4", "audio/mpeg": "mp3", "audio/mp3": "mp3",
+      "audio/wav": "wav", "audio/x-wav": "wav", "audio/wave": "wav",
+      "audio/aac": "aac", "audio/m4a": "m4a", "audio/x-m4a": "m4a", "audio/ogg": "ogg",
+    };
+    const ext = extMap[mime.split(";")[0]] ?? "webm";
+
+    const form = new FormData();
+    form.append("model", MODEL_STT);
+    form.append("file", new Blob([bytes], { type: mime }), `recording.${ext}`);
+    if (data.language) form.append("language", data.language);
+
+    const sttRes = await fetch(GATEWAY_STT, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}` },
+      body: form,
+    });
+    if (!sttRes.ok) {
+      const text = await sttRes.text().catch(() => "");
+      if (sttRes.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
+      if (sttRes.status === 402) throw new Error("AI credits exhausted.");
+      throw new Error(`Transcription failed ${sttRes.status}: ${text.slice(0, 200)}`);
+    }
+    const sttJson = await sttRes.json();
+    const transcript: string = String(sttJson.text ?? "").trim();
+    if (!transcript) {
       return {
-        risk_score: 50, risk_level: "caution" as const,
-        scam_type: "Unknown", explanation: raw.slice(0, 400),
-        red_flags: [], recommended_actions: ["Do not share OTPs, PINs or passwords.", "If unsure, call 1930."],
+        transcript: "",
+        riskScore: 0, confidence: 0, riskLevel: "safe",
+        detectedScamType: "No speech detected", extractedText: "",
+        detectedLinks: [], detectedPhoneNumbers: [], detectedUPI: [],
+        suspiciousPhrases: [], redFlags: [],
+        summary: "No speech was detected in the recording. Try again in a quieter place.",
+        recommendation: "Re-record clearly and closer to the mic.",
+        recommendedActions: ["Re-record the call in a quieter place."],
       };
     }
+
+    const raw = await callChat({
+      model: MODEL_CHAT,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT + "\nWhen asked to analyze, reply with strict JSON only." },
+        { role: "user", content: [
+          { type: "text", text: ANALYSIS_INSTRUCTION },
+          { type: "text", text: `Voice call transcript to analyze:\n${transcript}` },
+        ]},
+      ],
+      temperature: 0.2,
+    });
+    const analysis = parseAnalysis(raw);
+    return { ...analysis, transcript, extractedText: analysis.extractedText || transcript };
   });

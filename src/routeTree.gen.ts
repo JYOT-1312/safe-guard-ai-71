@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVoiceDetectorRouteImport } from './routes/_authenticated/voice-detector'
 import { Route as AuthenticatedScamDetectorRouteImport } from './routes/_authenticated/scam-detector'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -31,6 +32,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVoiceDetectorRoute =
+  AuthenticatedVoiceDetectorRouteImport.update({
+    id: '/voice-detector',
+    path: '/voice-detector',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedScamDetectorRoute =
   AuthenticatedScamDetectorRouteImport.update({
     id: '/scam-detector',
@@ -60,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
+  '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
+  '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,6 +87,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
+  '/_authenticated/voice-detector': typeof AuthenticatedVoiceDetectorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,8 +98,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/learn'
     | '/scam-detector'
+    | '/voice-detector'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/chat' | '/dashboard' | '/learn' | '/scam-detector'
+  to:
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/dashboard'
+    | '/learn'
+    | '/scam-detector'
+    | '/voice-detector'
   id:
     | '__root__'
     | '/'
@@ -99,6 +117,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/learn'
     | '/_authenticated/scam-detector'
+    | '/_authenticated/voice-detector'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -129,6 +148,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/voice-detector': {
+      id: '/_authenticated/voice-detector'
+      path: '/voice-detector'
+      fullPath: '/voice-detector'
+      preLoaderRoute: typeof AuthenticatedVoiceDetectorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/scam-detector': {
       id: '/_authenticated/scam-detector'
@@ -166,6 +192,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedScamDetectorRoute: typeof AuthenticatedScamDetectorRoute
+  AuthenticatedVoiceDetectorRoute: typeof AuthenticatedVoiceDetectorRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -173,6 +200,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedScamDetectorRoute: AuthenticatedScamDetectorRoute,
+  AuthenticatedVoiceDetectorRoute: AuthenticatedVoiceDetectorRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

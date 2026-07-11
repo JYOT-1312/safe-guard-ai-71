@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageCircle, ScanLine, GraduationCap, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, MessageCircle, ScanLine, Mic, GraduationCap, LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/chat", label: "AI Chat", icon: MessageCircle },
   { to: "/scam-detector", label: "Scam Detector", icon: ScanLine },
+  { to: "/voice-detector", label: "Voice Detector", icon: Mic },
   { to: "/learn", label: "Learning Center", icon: GraduationCap },
 ] as const;
 
