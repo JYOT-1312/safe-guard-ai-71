@@ -202,3 +202,165 @@ export const analyzeAudio = createServerFn({ method: "POST" })
     const analysis = parseAnalysis(raw);
     return { ...analysis, transcript, extractedText: analysis.extractedText || transcript };
   });
+
+// ============================================================
+// Chat Analyzer (WhatsApp / SMS / Telegram / Messenger)
+// ============================================================
+
+const CHAT_CATEGORIES = [
+  "Scam", "Emotional Manipulation", "Fake Job", "Lottery",
+  "Crypto Investment", "Loan Scam", "Phishing", "Romance Scam", "Impersonation", "Safe",
+] as const;
+
+const LEARNING_TOPICS = [
+  "upi-safety", "loan-app-safety", "phishing-basics",
+  "kyc-fraud", "qr-fraud", "cyber-crime-reporting",
+] as const;
+
+const CHAT_INSTRUCTION = `You are analyzing a chat conversation from ${"${platform}"} for scam patterns common in India.
+
+Detect: Scam, Emotional Manipulation, Fake Job, Lottery, Crypto Investment, Loan Scam,
+Phishing, Romance Scam, Impersonation. Extract every URL, phone number, and UPI VPA.
+
+Return STRICT JSON only. No markdown, no code fences. Schema:
+{
+  "riskScore": number 0-100,
+  "confidence": number 0-100,
+  "riskLevel": "safe" | "caution" | "high",
+  "detectedScamType": string (one of: Scam, Emotional Manipulation, Fake Job, Lottery, Crypto Investment, Loan Scam, Phishing, Romance Scam, Impersonation, Safe),
+  "category": string (same as detectedScamType),
+  "platform": string (WhatsApp | SMS | Telegram | Messenger | Other),
+  "extractedText": "",
+  "detectedLinks": string[],
+  "detectedPhoneNumbers": string[],
+  "detectedUPI": string[],
+  "suspiciousPhrases": string[] (max 6, verbatim snippets),
+  "redFlags": string[] (max 6),
+  "reason": string (2-3 sentences explaining WHY this is or isn't a scam),
+  "summary": string (same as reason),
+  "recommendation": string,
+  "recommendedActions": string[] (max 4),
+  "relatedLearning": { "slug": string (one of: upi-safety, loan-app-safety, phishing-basics, kyc-fraud, qr-fraud, cyber-crime-reporting), "title": string }
+}`;
+
+export const analyzeChat = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    conversation: z.string().min(1).max(8000),
+    platform: z.enum(["WhatsApp", "SMS", "Telegram", "Messenger", "Other"]).default("WhatsApp"),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const instruction = CHAT_INSTRUCTION.replace("${platform}", data.platform);
+    const raw = await callChat({
+      model: MODEL_CHAT,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT + "\nWhen asked to analyze, reply with strict JSON only." },
+        { role: "user", content: [
+          { type: "text", text: instruction },
+          { type: "text", text: `Platform: ${data.platform}\nConversation:\n${data.conversation}` },
+        ]},
+      ],
+      temperature: 0.2,
+    });
+    const base = parseAnalysis(raw);
+    let extra: { category: string; platform: string; reason: string; relatedLearning: { slug: string; title: string } | null } = {
+      category: base.detectedScamType, platform: data.platform, reason: base.summary, relatedLearning: null,
+    };
+    try {
+      const cleaned = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/, "").trim();
+      const p = JSON.parse(cleaned);
+      const cat = CHAT_CATEGORIES.find((c) => c.toLowerCase() === String(p.category ?? p.detectedScamType ?? "").toLowerCase()) ?? base.detectedScamType;
+      const rl = p.relatedLearning;
+      const slug = rl && LEARNING_TOPICS.includes(String(rl.slug) as typeof LEARNING_TOPICS[number]) ? String(rl.slug) : null;
+      extra = {
+        category: String(cat),
+        platform: String(p.platform ?? data.platform),
+        reason: String(p.reason ?? base.summary),
+        relatedLearning: slug ? { slug, title: String(rl.title ?? slug) } : null,
+      };
+    } catch { /* fallback already set */ }
+    return { ...base, ...extra };
+  });
+
+// ============================================================
+// Email Analyzer
+// ============================================================
+
+const EMAIL_INSTRUCTION = `Analyze this email for phishing / spoofing / fraud targeting Indian banking users.
+
+Detect: spoofed sender domain, display-name mismatch, reply-to mismatch, suspicious attachments,
+tracking pixels, deceptive links (visible text vs actual URL), urgency & threats, credential harvesting.
+
+Return STRICT JSON only. No markdown, no code fences. Schema:
+{
+  "riskScore": number 0-100,
+  "confidence": number 0-100,
+  "riskLevel": "safe" | "caution" | "high",
+  "detectedScamType": string (e.g. "Phishing", "Spoofed Sender", "Safe"),
+  "extractedText": "",
+  "detectedLinks": string[],
+  "detectedPhoneNumbers": string[],
+  "detectedUPI": string[],
+  "suspiciousPhrases": string[] (max 6),
+  "redFlags": string[] (max 6),
+  "summary": string (2-3 sentences),
+  "recommendation": string,
+  "recommendedActions": string[] (max 4),
+  "senderDomain": string (domain of From:, or ""),
+  "replyToDomain": string (domain of Reply-To:, or ""),
+  "domainMismatch": boolean (true if From vs Reply-To domains differ meaningfully),
+  "domainTrust": "trusted" | "unknown" | "suspicious" | "spoofed",
+  "senderReputation": "good" | "unknown" | "poor",
+  "suspiciousAttachments": string[],
+  "trackingPixels": boolean
+}`;
+
+export const analyzeEmail = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    sender: z.string().max(300).optional(),
+    replyTo: z.string().max(300).optional(),
+    subject: z.string().max(500).optional(),
+    body: z.string().min(1).max(20000),
+    rawHeaders: z.string().max(6000).optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const composed = [
+      data.sender ? `From: ${data.sender}` : "",
+      data.replyTo ? `Reply-To: ${data.replyTo}` : "",
+      data.subject ? `Subject: ${data.subject}` : "",
+      data.rawHeaders ? `Headers:\n${data.rawHeaders}` : "",
+      `Body:\n${data.body}`,
+    ].filter(Boolean).join("\n");
+
+    const raw = await callChat({
+      model: MODEL_CHAT,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT + "\nWhen asked to analyze, reply with strict JSON only." },
+        { role: "user", content: [
+          { type: "text", text: EMAIL_INSTRUCTION },
+          { type: "text", text: `Email to analyze:\n${composed}` },
+        ]},
+      ],
+      temperature: 0.2,
+    });
+    const base = parseAnalysis(raw);
+    let extra = {
+      senderDomain: "", replyToDomain: "", domainMismatch: false,
+      domainTrust: "unknown" as "trusted" | "unknown" | "suspicious" | "spoofed",
+      senderReputation: "unknown" as "good" | "unknown" | "poor",
+      suspiciousAttachments: [] as string[], trackingPixels: false,
+    };
+    try {
+      const cleaned = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/, "").trim();
+      const p = JSON.parse(cleaned);
+      extra = {
+        senderDomain: String(p.senderDomain ?? ""),
+        replyToDomain: String(p.replyToDomain ?? ""),
+        domainMismatch: Boolean(p.domainMismatch),
+        domainTrust: (["trusted","unknown","suspicious","spoofed"].includes(p.domainTrust) ? p.domainTrust : "unknown"),
+        senderReputation: (["good","unknown","poor"].includes(p.senderReputation) ? p.senderReputation : "unknown"),
+        suspiciousAttachments: Array.isArray(p.suspiciousAttachments) ? p.suspiciousAttachments.map(String) : [],
+        trackingPixels: Boolean(p.trackingPixels),
+      };
+    } catch { /* keep defaults */ }
+    return { ...base, ...extra };
+  });
