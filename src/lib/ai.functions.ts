@@ -364,3 +364,175 @@ export const analyzeEmail = createServerFn({ method: "POST" })
     } catch { /* keep defaults */ }
     return { ...base, ...extra };
   });
+
+// ============================================================
+// URL Analyzer
+// ============================================================
+
+const KNOWN_BRANDS = [
+  "google.com","gmail.com","paytm.com","phonepe.com","gpay.google.com","pay.google.com",
+  "sbi.co.in","onlinesbi.sbi","hdfcbank.com","icicibank.com","axisbank.com","kotak.com",
+  "yesbank.in","pnbindia.in","bankofbaroda.in","unionbankofindia.co.in","canarabank.com",
+  "npci.org.in","upi.npci.org.in","rbi.org.in","incometax.gov.in","cybercrime.gov.in",
+  "amazon.in","flipkart.com","irctc.co.in","zomato.com","swiggy.com","myntra.com",
+  "microsoft.com","apple.com","facebook.com","whatsapp.com","instagram.com",
+];
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+    dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+  }
+  return dp[m][n];
+}
+
+function normalizeUrl(input: string): { url: URL; hostname: string; registrable: string } {
+  let raw = input.trim();
+  if (!/^https?:\/\//i.test(raw)) raw = "http://" + raw;
+  const url = new URL(raw);
+  const hostname = url.hostname.toLowerCase();
+  const parts = hostname.split(".");
+  const registrable = parts.length >= 2 ? parts.slice(-2).join(".") : hostname;
+  return { url, hostname, registrable };
+}
+
+async function checkSSL(hostname: string): Promise<{ hasSSL: boolean; error?: string }> {
+  try {
+    const res = await fetch(`https://${hostname}/`, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(6000) });
+    return { hasSSL: res.status > 0 };
+  } catch (e) {
+    return { hasSSL: false, error: e instanceof Error ? e.message : "SSL check failed" };
+  }
+}
+
+async function whoisLookup(registrable: string): Promise<{ found: boolean; registrar?: string; created?: string; ageDays?: number; expires?: string }> {
+  try {
+    const res = await fetch(`https://rdap.org/domain/${registrable}`, { headers: { Accept: "application/rdap+json" }, signal: AbortSignal.timeout(7000) });
+    if (!res.ok) return { found: false };
+    const data = await res.json();
+    let created: string | undefined, expires: string | undefined;
+    for (const e of data.events ?? []) {
+      if (e.eventAction === "registration") created = e.eventDate;
+      if (e.eventAction === "expiration") expires = e.eventDate;
+    }
+    const registrar = (data.entities ?? []).find((x: { roles?: string[] }) => (x.roles ?? []).includes("registrar"))?.vcardArray?.[1]?.find((r: unknown[]) => r[0] === "fn")?.[3];
+    const ageDays = created ? Math.floor((Date.now() - new Date(created).getTime()) / 86400000) : undefined;
+    return { found: true, registrar: registrar ? String(registrar) : undefined, created, ageDays, expires };
+  } catch {
+    return { found: false };
+  }
+}
+
+function typosquatCheck(registrable: string): { isTyposquat: boolean; nearestBrand?: string; distance?: number } {
+  if (KNOWN_BRANDS.includes(registrable)) return { isTyposquat: false };
+  let best = { brand: "", dist: Infinity };
+  for (const brand of KNOWN_BRANDS) {
+    const d = levenshtein(registrable, brand);
+    if (d < best.dist) best = { brand, dist: d };
+  }
+  const isTyposquat = best.dist > 0 && best.dist <= 2 && best.brand.length >= 6;
+  return { isTyposquat, nearestBrand: best.brand, distance: best.dist };
+}
+
+export const analyzeUrl = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ url: z.string().min(3).max(2048) }).parse(d))
+  .handler(async ({ data }) => {
+    let normalized: { url: URL; hostname: string; registrable: string };
+    try { normalized = normalizeUrl(data.url); }
+    catch { throw new Error("Invalid URL. Include the full address, e.g. https://example.com"); }
+    const { url, hostname, registrable } = normalized;
+
+    const [ssl, whois] = await Promise.all([checkSSL(hostname), whoisLookup(registrable)]);
+    const typo = typosquatCheck(registrable);
+
+    const signals = {
+      inputUrl: url.toString(),
+      hostname, registrable,
+      scheme: url.protocol.replace(":", ""),
+      hasSSL: ssl.hasSSL,
+      sslError: ssl.error ?? null,
+      whoisFound: whois.found,
+      registrar: whois.registrar ?? null,
+      domainCreated: whois.created ?? null,
+      domainAgeDays: whois.ageDays ?? null,
+      domainExpires: whois.expires ?? null,
+      typosquatSuspected: typo.isTyposquat,
+      nearestKnownBrand: typo.nearestBrand ?? null,
+      typosquatDistance: typo.distance ?? null,
+      hasIPHost: /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname),
+      hasSuspiciousTld: /\.(zip|mov|top|xyz|click|country|link|work|gq|tk|ml|cf)$/i.test(hostname),
+      pathLength: url.pathname.length,
+      hasAt: url.href.includes("@"),
+      manyHyphens: (registrable.match(/-/g) ?? []).length >= 3,
+      // External blacklist checks (Google Safe Browsing / VirusTotal) require API keys
+      // and are not enabled; the LLM synthesizes trust from the signals above.
+      googleSafeBrowsing: "not_configured",
+      virusTotal: "not_configured",
+    };
+
+    const instruction = `You are analyzing a URL for phishing / fraud risk targeting Indian banking users.
+Use the collected signals to synthesize a trust score. Weigh heavily: typosquatting of known banking/UPI brands,
+missing HTTPS, IP-address hostnames, very new domains (< 90 days), suspicious TLDs, presence of "@" in URL.
+
+Return STRICT JSON only. No markdown. Schema:
+{
+  "riskScore": number 0-100,
+  "trustScore": number 0-100 (100 = fully trusted),
+  "confidence": number 0-100,
+  "riskLevel": "safe" | "caution" | "high",
+  "detectedScamType": string (e.g. "Phishing", "Typosquat", "Safe"),
+  "extractedText": "",
+  "detectedLinks": string[] (the URL itself),
+  "detectedPhoneNumbers": [],
+  "detectedUPI": [],
+  "suspiciousPhrases": [],
+  "redFlags": string[] (max 6, short human explanations),
+  "summary": string (2-3 sentences),
+  "recommendation": string (one sentence),
+  "recommendedActions": string[] (max 4)
+}`;
+
+    const raw = await callChat({
+      model: MODEL_CHAT,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT + "\nWhen asked to analyze, reply with strict JSON only." },
+        { role: "user", content: [
+          { type: "text", text: instruction },
+          { type: "text", text: `Signals:\n${JSON.stringify(signals, null, 2)}` },
+        ]},
+      ],
+      temperature: 0.2,
+    });
+    const base = parseAnalysis(raw);
+    let trustScore = 100 - base.riskScore;
+    try {
+      const cleaned = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/, "").trim();
+      const p = JSON.parse(cleaned);
+      if (typeof p.trustScore === "number") trustScore = Math.max(0, Math.min(100, p.trustScore));
+    } catch { /* keep computed */ }
+
+    const screenshotUrl = `https://image.thum.io/get/width/800/crop/500/${url.toString()}`;
+
+    return {
+      ...base,
+      trustScore,
+      hostname, registrable,
+      scheme: signals.scheme,
+      hasSSL: signals.hasSSL,
+      registrar: signals.registrar,
+      domainCreated: signals.domainCreated,
+      domainAgeDays: signals.domainAgeDays,
+      domainExpires: signals.domainExpires,
+      typosquatSuspected: signals.typosquatSuspected,
+      nearestKnownBrand: signals.nearestKnownBrand,
+      hasIPHost: signals.hasIPHost,
+      hasSuspiciousTld: signals.hasSuspiciousTld,
+      googleSafeBrowsing: signals.googleSafeBrowsing,
+      virusTotal: signals.virusTotal,
+      screenshotUrl,
+      analyzedUrl: url.toString(),
+    };
+  });
