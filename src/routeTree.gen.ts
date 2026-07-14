@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVoiceDetectorRouteImport } from './routes/_authenticated/voice-detector'
+import { Route as AuthenticatedUrlAnalyzerRouteImport } from './routes/_authenticated/url-analyzer'
 import { Route as AuthenticatedScamDetectorRouteImport } from './routes/_authenticated/scam-detector'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedEmailAnalyzerRouteImport } from './routes/_authenticated/email-analyzer'
@@ -38,6 +39,12 @@ const AuthenticatedVoiceDetectorRoute =
   AuthenticatedVoiceDetectorRouteImport.update({
     id: '/voice-detector',
     path: '/voice-detector',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedUrlAnalyzerRoute =
+  AuthenticatedUrlAnalyzerRouteImport.update({
+    id: '/url-analyzer',
+    path: '/url-analyzer',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedScamDetectorRoute =
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
+  '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
 }
 export interface FileRoutesByTo {
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
+  '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
 }
 export interface FileRoutesById {
@@ -107,6 +116,7 @@ export interface FileRoutesById {
   '/_authenticated/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
+  '/_authenticated/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/_authenticated/voice-detector': typeof AuthenticatedVoiceDetectorRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/email-analyzer'
     | '/learn'
     | '/scam-detector'
+    | '/url-analyzer'
     | '/voice-detector'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/email-analyzer'
     | '/learn'
     | '/scam-detector'
+    | '/url-analyzer'
     | '/voice-detector'
   id:
     | '__root__'
@@ -143,6 +155,7 @@ export interface FileRouteTypes {
     | '/_authenticated/email-analyzer'
     | '/_authenticated/learn'
     | '/_authenticated/scam-detector'
+    | '/_authenticated/url-analyzer'
     | '/_authenticated/voice-detector'
   fileRoutesById: FileRoutesById
 }
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/voice-detector'
       fullPath: '/voice-detector'
       preLoaderRoute: typeof AuthenticatedVoiceDetectorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/url-analyzer': {
+      id: '/_authenticated/url-analyzer'
+      path: '/url-analyzer'
+      fullPath: '/url-analyzer'
+      preLoaderRoute: typeof AuthenticatedUrlAnalyzerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/scam-detector': {
@@ -234,6 +254,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmailAnalyzerRoute: typeof AuthenticatedEmailAnalyzerRoute
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedScamDetectorRoute: typeof AuthenticatedScamDetectorRoute
+  AuthenticatedUrlAnalyzerRoute: typeof AuthenticatedUrlAnalyzerRoute
   AuthenticatedVoiceDetectorRoute: typeof AuthenticatedVoiceDetectorRoute
 }
 
@@ -244,6 +265,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmailAnalyzerRoute: AuthenticatedEmailAnalyzerRoute,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedScamDetectorRoute: AuthenticatedScamDetectorRoute,
+  AuthenticatedUrlAnalyzerRoute: AuthenticatedUrlAnalyzerRoute,
   AuthenticatedVoiceDetectorRoute: AuthenticatedVoiceDetectorRoute,
 }
 

@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, GraduationCap, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, GraduationCap, LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ const nav = [
   { to: "/voice-detector", label: "Voice Detector", icon: Mic },
   { to: "/chat-analyzer", label: "Chat Analyzer", icon: MessagesSquare },
   { to: "/email-analyzer", label: "Email Analyzer", icon: Mail },
+  { to: "/url-analyzer", label: "URL Analyzer", icon: Link2 },
   { to: "/learn", label: "Learning Center", icon: GraduationCap },
 ] as const;
 
