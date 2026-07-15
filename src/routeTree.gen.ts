@@ -15,7 +15,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVoiceDetectorRouteImport } from './routes/_authenticated/voice-detector'
 import { Route as AuthenticatedUrlAnalyzerRouteImport } from './routes/_authenticated/url-analyzer'
 import { Route as AuthenticatedScamDetectorRouteImport } from './routes/_authenticated/scam-detector'
+import { Route as AuthenticatedQrAnalyzerRouteImport } from './routes/_authenticated/qr-analyzer'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
+import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedEmailAnalyzerRouteImport } from './routes/_authenticated/email-analyzer'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatAnalyzerRouteImport } from './routes/_authenticated/chat-analyzer'
@@ -53,9 +55,19 @@ const AuthenticatedScamDetectorRoute =
     path: '/scam-detector',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedQrAnalyzerRoute = AuthenticatedQrAnalyzerRouteImport.update({
+  id: '/qr-analyzer',
+  path: '/qr-analyzer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLearnRoute = AuthenticatedLearnRouteImport.update({
   id: '/learn',
   path: '/learn',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEmailAnalyzerRoute =
@@ -88,7 +100,9 @@ export interface FileRoutesByFullPath {
   '/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
+  '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/learn': typeof AuthenticatedLearnRoute
+  '/qr-analyzer': typeof AuthenticatedQrAnalyzerRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
@@ -100,7 +114,9 @@ export interface FileRoutesByTo {
   '/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
+  '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/learn': typeof AuthenticatedLearnRoute
+  '/qr-analyzer': typeof AuthenticatedQrAnalyzerRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
@@ -114,7 +130,9 @@ export interface FileRoutesById {
   '/_authenticated/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
+  '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
+  '/_authenticated/qr-analyzer': typeof AuthenticatedQrAnalyzerRoute
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/_authenticated/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/_authenticated/voice-detector': typeof AuthenticatedVoiceDetectorRoute
@@ -128,7 +146,9 @@ export interface FileRouteTypes {
     | '/chat-analyzer'
     | '/dashboard'
     | '/email-analyzer'
+    | '/knowledge'
     | '/learn'
+    | '/qr-analyzer'
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
@@ -140,7 +160,9 @@ export interface FileRouteTypes {
     | '/chat-analyzer'
     | '/dashboard'
     | '/email-analyzer'
+    | '/knowledge'
     | '/learn'
+    | '/qr-analyzer'
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
@@ -153,7 +175,9 @@ export interface FileRouteTypes {
     | '/_authenticated/chat-analyzer'
     | '/_authenticated/dashboard'
     | '/_authenticated/email-analyzer'
+    | '/_authenticated/knowledge'
     | '/_authenticated/learn'
+    | '/_authenticated/qr-analyzer'
     | '/_authenticated/scam-detector'
     | '/_authenticated/url-analyzer'
     | '/_authenticated/voice-detector'
@@ -209,11 +233,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScamDetectorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/qr-analyzer': {
+      id: '/_authenticated/qr-analyzer'
+      path: '/qr-analyzer'
+      fullPath: '/qr-analyzer'
+      preLoaderRoute: typeof AuthenticatedQrAnalyzerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/learn': {
       id: '/_authenticated/learn'
       path: '/learn'
       fullPath: '/learn'
       preLoaderRoute: typeof AuthenticatedLearnRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge': {
+      id: '/_authenticated/knowledge'
+      path: '/knowledge'
+      fullPath: '/knowledge'
+      preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/email-analyzer': {
@@ -252,7 +290,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatAnalyzerRoute: typeof AuthenticatedChatAnalyzerRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmailAnalyzerRoute: typeof AuthenticatedEmailAnalyzerRoute
+  AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
+  AuthenticatedQrAnalyzerRoute: typeof AuthenticatedQrAnalyzerRoute
   AuthenticatedScamDetectorRoute: typeof AuthenticatedScamDetectorRoute
   AuthenticatedUrlAnalyzerRoute: typeof AuthenticatedUrlAnalyzerRoute
   AuthenticatedVoiceDetectorRoute: typeof AuthenticatedVoiceDetectorRoute
@@ -263,7 +303,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatAnalyzerRoute: AuthenticatedChatAnalyzerRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmailAnalyzerRoute: AuthenticatedEmailAnalyzerRoute,
+  AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
+  AuthenticatedQrAnalyzerRoute: AuthenticatedQrAnalyzerRoute,
   AuthenticatedScamDetectorRoute: AuthenticatedScamDetectorRoute,
   AuthenticatedUrlAnalyzerRoute: AuthenticatedUrlAnalyzerRoute,
   AuthenticatedVoiceDetectorRoute: AuthenticatedVoiceDetectorRoute,
