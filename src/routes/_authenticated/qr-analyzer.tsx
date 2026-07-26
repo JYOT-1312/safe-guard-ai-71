@@ -7,6 +7,7 @@ import { ResultCard } from "@/routes/_authenticated/scam-detector";
 import { Loader2, Upload, ScanLine, RotateCcw, ShieldAlert, QrCode, Wallet, Link as LinkIcon, Phone, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import jsQR from "jsqr";
+import { saveAnalysis } from "@/lib/history";
 
 export const Route = createFileRoute("/_authenticated/qr-analyzer")({
   component: QRAnalyzer,
@@ -77,8 +78,9 @@ function QRAnalyzer() {
     if (!c) { toast.error("Upload a QR image or paste the QR content"); return; }
     setLoading(true); setResult(null);
     try {
-      const r = await call({ data: { content: c } });
-      setResult(r as QRResult);
+      const r = await call({ data: { content: c } }) as QRResult;
+      setResult(r);
+      void saveAnalysis({ type: "qr", title: `${r.qrType || "QR"} · ${r.qrIntent || "scan"}`, summary: r.summary, risk: r.riskScore, confidence: r.confidence, payload: r });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally { setLoading(false); }

@@ -6,6 +6,7 @@ import { analyzeChat } from "@/lib/ai.functions";
 import { ResultCard } from "@/routes/_authenticated/scam-detector";
 import { Loader2, RotateCcw, MessageSquare, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { saveAnalysis } from "@/lib/history";
 
 export const Route = createFileRoute("/_authenticated/chat-analyzer")({
   component: ChatAnalyzer,
@@ -32,8 +33,9 @@ function ChatAnalyzer() {
     if (!conversation.trim()) { toast.error("Paste the chat conversation first"); return; }
     setLoading(true); setResult(null);
     try {
-      const r = await call({ data: { conversation: conversation.trim(), platform } });
-      setResult(r as ChatResult);
+      const r = await call({ data: { conversation: conversation.trim(), platform } }) as ChatResult;
+      setResult(r);
+      void saveAnalysis({ type: "chat", title: `${r.platform || platform} · ${r.category || "Chat"}`, summary: r.summary, risk: r.riskScore, confidence: r.confidence, payload: r });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally { setLoading(false); }

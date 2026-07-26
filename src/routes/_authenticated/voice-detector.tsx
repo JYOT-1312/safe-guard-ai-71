@@ -3,8 +3,10 @@ import { AppShell } from "@/components/app-shell";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { analyzeAudio } from "@/lib/ai.functions";
-import { Mic, Square, Upload, Loader2, RotateCcw, Play, Pause, Download } from "lucide-react";
+import { ResultCard } from "@/routes/_authenticated/scam-detector";
+import { Mic, Square, Play, Pause, Upload, RotateCcw, Loader2, Download, Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { saveAnalysis } from "@/lib/history";
 import { ResultCard } from "./scam-detector";
 
 export const Route = createFileRoute("/_authenticated/voice-detector")({
@@ -152,6 +154,7 @@ function VoiceDetector() {
       const dataUrl = await blobToDataUrl(blob);
       const r = await call({ data: { audioDataUrl: dataUrl, mimeType: blob.type || "audio/webm" } });
       setResult(r);
+      void saveAnalysis({ type: "voice", title: r.detectedScamType || "Voice recording", summary: r.summary, risk: r.riskScore, confidence: r.confidence, payload: r });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally {

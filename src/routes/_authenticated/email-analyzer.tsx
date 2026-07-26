@@ -6,6 +6,7 @@ import { analyzeEmail } from "@/lib/ai.functions";
 import { ResultCard } from "@/routes/_authenticated/scam-detector";
 import { Loader2, RotateCcw, Mail, ShieldAlert, ShieldCheck, AlertTriangle, Paperclip, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { saveAnalysis } from "@/lib/history";
 
 export const Route = createFileRoute("/_authenticated/email-analyzer")({
   component: EmailAnalyzer,
@@ -42,8 +43,9 @@ function EmailAnalyzer() {
         subject: subject.trim() || undefined,
         body: body.trim(),
         rawHeaders: rawHeaders.trim() || undefined,
-      }});
-      setResult(r as EmailResult);
+      }}) as EmailResult;
+      setResult(r);
+      void saveAnalysis({ type: "email", title: subject.trim() || sender.trim() || "Email analysis", summary: r.summary, risk: r.riskScore, confidence: r.confidence, payload: r });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally { setLoading(false); }
