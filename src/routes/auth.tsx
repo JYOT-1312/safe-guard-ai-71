@@ -139,6 +139,14 @@ function AuthPage() {
             </button>
           </form>
 
+          {mode === "login" && (
+            <div className="text-right mt-3">
+              <Link to="/forgot-password" className="text-sm text-brand-accent font-medium hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+          )}
+
           <p className="text-sm text-muted-foreground text-center mt-6">
             {mode === "login" ? "New to SurakshaSetu?" : "Already have an account?"}{" "}
             <button
