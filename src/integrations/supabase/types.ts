@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      analyses: {
+        Row: {
+          confidence: number
+          created_at: string
+          favorite: boolean
+          id: string
+          payload: Json
+          risk: number
+          summary: string | null
+          title: string
+          type: Database["public"]["Enums"]["analysis_type"]
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          favorite?: boolean
+          id?: string
+          payload?: Json
+          risk?: number
+          summary?: string | null
+          title: string
+          type: Database["public"]["Enums"]["analysis_type"]
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          favorite?: boolean
+          id?: string
+          payload?: Json
+          risk?: number
+          summary?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["analysis_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -49,6 +88,14 @@ export type Database = {
       }
     }
     Enums: {
+      analysis_type:
+        | "scam"
+        | "voice"
+        | "chat"
+        | "email"
+        | "url"
+        | "qr"
+        | "knowledge"
       app_role: "guest" | "user" | "moderator" | "admin"
     }
     CompositeTypes: {
@@ -177,6 +224,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      analysis_type: [
+        "scam",
+        "voice",
+        "chat",
+        "email",
+        "url",
+        "qr",
+        "knowledge",
+      ],
       app_role: ["guest", "user", "moderator", "admin"],
     },
   },
