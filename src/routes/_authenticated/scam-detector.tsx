@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { analyzeScam } from "@/lib/ai.functions";
 import { Upload, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, X, RotateCcw, Copy, Share2, Download, Link2, Phone, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { saveAnalysis } from "@/lib/history";
 
 export const Route = createFileRoute("/_authenticated/scam-detector")({
   component: ScamDetector,
@@ -45,6 +46,7 @@ function ScamDetector() {
     try {
       const r = await call({ data: { text: text.trim() || undefined, imageDataUrl: image ?? undefined } });
       setResult(r);
+      void saveAnalysis({ type: "scam", title: r.detectedScamType || (image ? "Screenshot analysis" : "Text analysis"), summary: r.summary, risk: r.riskScore, confidence: r.confidence, payload: r });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally {

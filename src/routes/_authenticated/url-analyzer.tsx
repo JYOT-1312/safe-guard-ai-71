@@ -6,6 +6,7 @@ import { analyzeUrl } from "@/lib/ai.functions";
 import { ResultCard } from "@/routes/_authenticated/scam-detector";
 import { Loader2, Link as LinkIcon, RotateCcw, ShieldCheck, ShieldAlert, Globe, Calendar, Building2, Lock, AlertTriangle, ImageOff } from "lucide-react";
 import { toast } from "sonner";
+import { saveAnalysis } from "@/lib/history";
 
 export const Route = createFileRoute("/_authenticated/url-analyzer")({
   component: UrlAnalyzer,
@@ -42,8 +43,9 @@ function UrlAnalyzer() {
     if (!url.trim()) { toast.error("Enter a URL to check"); return; }
     setLoading(true); setResult(null); setImgErr(false);
     try {
-      const r = await call({ data: { url: url.trim() } });
-      setResult(r as UrlResult);
+      const r = await call({ data: { url: url.trim() } }) as UrlResult;
+      setResult(r);
+      void saveAnalysis({ type: "url", title: r.hostname || r.analyzedUrl || url.trim(), summary: r.summary, risk: r.riskScore, confidence: r.confidence, payload: r });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally { setLoading(false); }
