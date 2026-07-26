@@ -7,7 +7,7 @@ import { ResultCard } from "@/routes/_authenticated/scam-detector";
 import { Mic, Square, Play, Pause, Upload, RotateCcw, Loader2, Download, Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { saveAnalysis } from "@/lib/history";
-import { ResultCard } from "./scam-detector";
+
 
 export const Route = createFileRoute("/_authenticated/voice-detector")({
   component: VoiceDetector,

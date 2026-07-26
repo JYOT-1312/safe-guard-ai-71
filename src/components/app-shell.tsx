@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, QrCode, BookOpen, GraduationCap, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, QrCode, BookOpen, GraduationCap, History, LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ const nav = [
   { to: "/qr-analyzer", label: "QR Analyzer", icon: QrCode },
   { to: "/knowledge", label: "Knowledge Engine", icon: BookOpen },
   { to: "/learn", label: "Learning Center", icon: GraduationCap },
+  { to: "/history", label: "History", icon: History },
 ] as const;
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
