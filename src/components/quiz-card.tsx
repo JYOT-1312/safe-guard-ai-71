@@ -59,10 +59,13 @@ export function QuizCard({ module }: { module: QuizModule }) {
 
   if (done) {
     const pct = Math.round((score / module.questions.length) * 100);
-    const tone = pct === 100 ? "safety-green" : pct >= 60 ? "brand-accent" : "alert-amber";
+    const toneCls =
+      pct === 100 ? { wrap: "bg-safety-green/5 border-safety-green/30", text: "text-safety-green" }
+      : pct >= 60 ? { wrap: "bg-brand-accent/5 border-brand-accent/30", text: "text-brand-accent" }
+      : { wrap: "bg-alert-amber/5 border-alert-amber/30", text: "text-alert-amber" };
     return (
-      <div className={`mt-4 rounded-2xl p-5 bg-${tone}/5 border border-${tone}/30`}>
-        <div className={`inline-flex items-center gap-2 text-${tone} font-bold`}>
+      <div className={`mt-4 rounded-2xl p-5 border ${toneCls.wrap}`}>
+        <div className={`inline-flex items-center gap-2 font-bold ${toneCls.text}`}>
           <Trophy className="size-5" /> {score} / {module.questions.length} · {pct}%
         </div>
         <p className="text-sm text-muted-foreground mt-1">Saved to your history.</p>

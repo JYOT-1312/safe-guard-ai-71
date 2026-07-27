@@ -18,6 +18,7 @@ import { Route as AuthenticatedVoiceDetectorRouteImport } from './routes/_authen
 import { Route as AuthenticatedUrlAnalyzerRouteImport } from './routes/_authenticated/url-analyzer'
 import { Route as AuthenticatedScamDetectorRouteImport } from './routes/_authenticated/scam-detector'
 import { Route as AuthenticatedQrAnalyzerRouteImport } from './routes/_authenticated/qr-analyzer'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
@@ -73,6 +74,11 @@ const AuthenticatedQrAnalyzerRoute = AuthenticatedQrAnalyzerRouteImport.update({
   path: '/qr-analyzer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLearnRoute = AuthenticatedLearnRouteImport.update({
   id: '/learn',
   path: '/learn',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof AuthenticatedHistoryRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/learn': typeof AuthenticatedLearnRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/qr-analyzer': typeof AuthenticatedQrAnalyzerRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/history': typeof AuthenticatedHistoryRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/learn': typeof AuthenticatedLearnRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/qr-analyzer': typeof AuthenticatedQrAnalyzerRoute
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/qr-analyzer': typeof AuthenticatedQrAnalyzerRoute
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/_authenticated/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/knowledge'
     | '/learn'
+    | '/profile'
     | '/qr-analyzer'
     | '/scam-detector'
     | '/url-analyzer'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/knowledge'
     | '/learn'
+    | '/profile'
     | '/qr-analyzer'
     | '/scam-detector'
     | '/url-analyzer'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/history'
     | '/_authenticated/knowledge'
     | '/_authenticated/learn'
+    | '/_authenticated/profile'
     | '/_authenticated/qr-analyzer'
     | '/_authenticated/scam-detector'
     | '/_authenticated/url-analyzer'
@@ -292,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQrAnalyzerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/learn': {
       id: '/_authenticated/learn'
       path: '/learn'
@@ -352,6 +371,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedQrAnalyzerRoute: typeof AuthenticatedQrAnalyzerRoute
   AuthenticatedScamDetectorRoute: typeof AuthenticatedScamDetectorRoute
   AuthenticatedUrlAnalyzerRoute: typeof AuthenticatedUrlAnalyzerRoute
@@ -366,6 +386,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedQrAnalyzerRoute: AuthenticatedQrAnalyzerRoute,
   AuthenticatedScamDetectorRoute: AuthenticatedScamDetectorRoute,
   AuthenticatedUrlAnalyzerRoute: AuthenticatedUrlAnalyzerRoute,
