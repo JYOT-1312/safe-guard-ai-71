@@ -1,12 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, QrCode, BookOpen, GraduationCap, History, LogOut, Menu, X, User } from "lucide-react";
+import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, QrCode, BookOpen, GraduationCap, History, LogOut, Menu, X, User, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { useHasRole } from "@/hooks/use-role";
 
-const nav = [
+const baseNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/chat", label: "AI Chat", icon: MessageCircle },
   { to: "/scam-detector", label: "Scam Detector", icon: ScanLine },
@@ -20,6 +21,8 @@ const nav = [
   { to: "/history", label: "History", icon: History },
   { to: "/profile", label: "Profile", icon: User },
 ] as const;
+
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard };
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const navigate = useNavigate();
