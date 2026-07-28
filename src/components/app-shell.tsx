@@ -29,6 +29,10 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
   const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const { has: isAdmin } = useHasRole("admin");
+  const nav: NavItem[] = isAdmin
+    ? [...baseNav, { to: "/admin", label: "Admin", icon: ShieldCheck }]
+    : [...baseNav];
 
   async function signOut() {
     await qc.cancelQueries();
