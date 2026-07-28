@@ -26,6 +26,8 @@ import { Route as AuthenticatedEmailAnalyzerRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatAnalyzerRouteImport } from './routes/_authenticated/chat-analyzer'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedChatSessionIdRouteImport } from './routes/_authenticated/chat.$sessionId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -116,13 +118,25 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatSessionIdRoute =
+  AuthenticatedChatSessionIdRouteImport.update({
+    id: '/$sessionId',
+    path: '/$sessionId',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/chat': typeof AuthenticatedChatRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
@@ -134,13 +148,15 @@ export interface FileRoutesByFullPath {
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/chat': typeof AuthenticatedChatRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
@@ -152,6 +168,7 @@ export interface FileRoutesByTo {
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,7 +177,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/chat': typeof AuthenticatedChatRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
@@ -172,6 +190,7 @@ export interface FileRoutesById {
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/_authenticated/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/_authenticated/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/_authenticated/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,6 +199,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/forgot-password'
     | '/reset-password'
+    | '/admin'
     | '/chat'
     | '/chat-analyzer'
     | '/dashboard'
@@ -192,12 +212,14 @@ export interface FileRouteTypes {
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
+    | '/chat/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/forgot-password'
     | '/reset-password'
+    | '/admin'
     | '/chat'
     | '/chat-analyzer'
     | '/dashboard'
@@ -210,6 +232,7 @@ export interface FileRouteTypes {
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
+    | '/chat/$sessionId'
   id:
     | '__root__'
     | '/'
@@ -217,6 +240,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/forgot-password'
     | '/reset-password'
+    | '/_authenticated/admin'
     | '/_authenticated/chat'
     | '/_authenticated/chat-analyzer'
     | '/_authenticated/dashboard'
@@ -229,6 +253,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scam-detector'
     | '/_authenticated/url-analyzer'
     | '/_authenticated/voice-detector'
+    | '/_authenticated/chat/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -360,11 +385,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat/$sessionId': {
+      id: '/_authenticated/chat/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/chat/$sessionId'
+      preLoaderRoute: typeof AuthenticatedChatSessionIdRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
   }
 }
 
+interface AuthenticatedChatRouteChildren {
+  AuthenticatedChatSessionIdRoute: typeof AuthenticatedChatSessionIdRoute
+}
+
+const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
+  AuthenticatedChatSessionIdRoute: AuthenticatedChatSessionIdRoute,
+}
+
+const AuthenticatedChatRouteWithChildren =
+  AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAnalyzerRoute: typeof AuthenticatedChatAnalyzerRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmailAnalyzerRoute: typeof AuthenticatedEmailAnalyzerRoute
@@ -379,7 +430,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedChatRoute: AuthenticatedChatRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAnalyzerRoute: AuthenticatedChatAnalyzerRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmailAnalyzerRoute: AuthenticatedEmailAnalyzerRoute,
@@ -406,13 +458,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
