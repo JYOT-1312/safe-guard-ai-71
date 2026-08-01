@@ -14,6 +14,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as AuthenticatedVoiceDetectorRouteImport } from './routes/_authenticated/voice-detector'
 import { Route as AuthenticatedUrlAnalyzerRouteImport } from './routes/_authenticated/url-analyzer'
 import { Route as AuthenticatedScamDetectorRouteImport } from './routes/_authenticated/scam-detector'
@@ -51,6 +52,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth_/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedVoiceDetectorRoute =
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
 export interface FileRoutesByTo {
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
 export interface FileRoutesById {
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/_authenticated/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/_authenticated/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/auth_/callback': typeof AuthCallbackRoute
   '/_authenticated/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
 export interface FileRouteTypes {
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
+    | '/auth/callback'
     | '/chat/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
+    | '/auth/callback'
     | '/chat/$sessionId'
   id:
     | '__root__'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scam-detector'
     | '/_authenticated/url-analyzer'
     | '/_authenticated/voice-detector'
+    | '/auth_/callback'
     | '/_authenticated/chat/$sessionId'
   fileRoutesById: FileRoutesById
 }
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -299,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/voice-detector': {
@@ -454,17 +474,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
