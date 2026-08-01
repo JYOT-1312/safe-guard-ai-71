@@ -5,7 +5,7 @@ import { sanitizeNext } from "@/lib/oauth";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
-export const Route = createFileRoute("/auth/callback")({
+export const Route = createFileRoute("/auth_/callback")({
   // Session lives in localStorage; nothing to render on the server.
   ssr: false,
   component: AuthCallback,
