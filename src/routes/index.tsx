@@ -3,6 +3,9 @@ import { ShieldCheck, ScanLine, Mic, QrCode, MessageCircle, Building2, Phone, Sp
 import heroImage from "@/assets/hero-shield.jpg";
 import howImage from "@/assets/how-it-works.jpg";
 import { Logo } from "@/components/logo";
+import { LESSON_TOPICS } from "@/lib/lesson-videos";
+import { LessonVideoCard } from "@/components/lesson-video-card";
+
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -96,10 +99,8 @@ function Landing() {
       {/* Trust Stats */}
       <section className="bg-white py-16 md:py-20 border-y border-border">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 gap-8 lg:gap-12">
             {[
-              { v: "₹42Cr+", l: "Scams Prevented" },
-              { v: "500k+", l: "Active Users" },
               { v: "99.8%", l: "AI Accuracy" },
               { v: "24/7", l: "Real-time Monitoring" },
             ].map((s) => (
@@ -109,6 +110,7 @@ function Landing() {
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
@@ -172,14 +174,11 @@ function Landing() {
           </div>
           <Link to="/learn" className="text-brand-accent font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all">Browse Safety Center <ArrowRight className="size-4" /></Link>
         </div>
-        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-4">
-          {["UPI Safety", "ATM & Debit", "Net Banking", "Cyber Hygiene"].map((t) => (
-            <div key={t} className="p-6 rounded-2xl border border-border bg-background hover:border-brand-accent transition-colors">
-              <ShieldCheck className="size-6 text-brand-accent mb-4" />
-              <div className="font-semibold">{t}</div>
-              <div className="text-xs text-muted-foreground mt-1">6 lessons · 12 min</div>
-            </div>
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {LESSON_TOPICS.map((t) => (
+            <LessonVideoCard key={t.slug} topic={t} />
           ))}
+
         </div>
       </section>
 
