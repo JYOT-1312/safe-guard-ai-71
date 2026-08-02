@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShieldCheck, ScanLine, Mic, QrCode, MessageCircle, Building2, Phone, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ScanLine, Mic, QrCode, MessageCircle, Building2, Phone, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 import heroImage from "@/assets/hero-shield.jpg";
 import howImage from "@/assets/how-it-works.jpg";
 import { Logo } from "@/components/logo";
@@ -227,8 +227,3 @@ function Landing() {
     </div>
   );
 }
-
-function ShieldUnused() {
-  return <ShieldCheck />;
-}
-void ShieldUnused;
