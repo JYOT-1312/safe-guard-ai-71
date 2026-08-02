@@ -171,14 +171,11 @@ function Landing() {
           </div>
           <Link to="/learn" className="text-brand-accent font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all">Browse Safety Center <ArrowRight className="size-4" /></Link>
         </div>
-        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-4">
-          {["UPI Safety", "ATM & Debit", "Net Banking", "Cyber Hygiene"].map((t) => (
-            <div key={t} className="p-6 rounded-2xl border border-border bg-background hover:border-brand-accent transition-colors">
-              <ShieldCheck className="size-6 text-brand-accent mb-4" />
-              <div className="font-semibold">{t}</div>
-              <div className="text-xs text-muted-foreground mt-1">6 lessons · 12 min</div>
-            </div>
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {LESSON_TOPICS.map((t) => (
+            <LessonVideoCard key={t.slug} topic={t} />
           ))}
+
         </div>
       </section>
 
