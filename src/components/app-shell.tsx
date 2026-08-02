@@ -6,23 +6,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useHasRole } from "@/hooks/use-role";
+import { useI18n, type TKey } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const baseNav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/chat", label: "AI Chat", icon: MessageCircle },
-  { to: "/scam-detector", label: "Scam Detector", icon: ScanLine },
-  { to: "/voice-detector", label: "Voice Detector", icon: Mic },
-  { to: "/chat-analyzer", label: "Chat Analyzer", icon: MessagesSquare },
-  { to: "/email-analyzer", label: "Email Analyzer", icon: Mail },
-  { to: "/url-analyzer", label: "URL Analyzer", icon: Link2 },
-  { to: "/qr-analyzer", label: "QR Analyzer", icon: QrCode },
-  { to: "/knowledge", label: "Knowledge Engine", icon: BookOpen },
-  { to: "/learn", label: "Learning Center", icon: GraduationCap },
-  { to: "/history", label: "History", icon: History },
-  { to: "/profile", label: "Profile", icon: User },
+  { to: "/dashboard", label: "app.nav.dashboard", icon: LayoutDashboard },
+  { to: "/chat", label: "app.nav.chat", icon: MessageCircle },
+  { to: "/scam-detector", label: "app.nav.scam", icon: ScanLine },
+  { to: "/voice-detector", label: "app.nav.voice", icon: Mic },
+  { to: "/chat-analyzer", label: "app.nav.chatAnalyzer", icon: MessagesSquare },
+  { to: "/email-analyzer", label: "app.nav.email", icon: Mail },
+  { to: "/url-analyzer", label: "app.nav.url", icon: Link2 },
+  { to: "/qr-analyzer", label: "app.nav.qr", icon: QrCode },
+  { to: "/knowledge", label: "app.nav.knowledge", icon: BookOpen },
+  { to: "/learn", label: "app.nav.learn", icon: GraduationCap },
+  { to: "/history", label: "app.nav.history", icon: History },
+  { to: "/profile", label: "app.nav.profile", icon: User },
 ] as const;
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard };
+type NavItem = { to: string; label: TKey; icon: typeof LayoutDashboard };
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const navigate = useNavigate();
@@ -30,8 +32,9 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const { has: isAdmin } = useHasRole("admin");
+  const { t } = useI18n();
   const nav: NavItem[] = isAdmin
-    ? [...baseNav, { to: "/admin", label: "Admin", icon: ShieldCheck }]
+    ? [...baseNav, { to: "/admin", label: "app.nav.admin" as TKey, icon: ShieldCheck }]
     : [...baseNav];
 
   async function signOut() {
@@ -52,14 +55,14 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
             const active = pathname === n.to;
             return (
               <Link key={n.to} to={n.to} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${active ? "bg-brand-accent/10 text-brand-accent" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
-                <n.icon className="size-4" /> {n.label}
+                <n.icon className="size-4" /> {t(n.label)}
               </Link>
             );
           })}
         </nav>
         <div className="p-4 border-t border-border">
           <button onClick={signOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
-            <LogOut className="size-4" /> Sign out
+            <LogOut className="size-4" /> {t("app.signout")}
           </button>
         </div>
       </aside>
@@ -76,13 +79,13 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
             <nav className="flex-1 p-4 space-y-1">
               {nav.map((n) => (
                 <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary">
-                  <n.icon className="size-4" /> {n.label}
+                  <n.icon className="size-4" /> {t(n.label)}
                 </Link>
               ))}
             </nav>
             <div className="p-4 border-t border-border">
               <button onClick={signOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary">
-                <LogOut className="size-4" /> Sign out
+                <LogOut className="size-4" /> {t("app.signout")}
               </button>
             </div>
           </aside>
@@ -97,6 +100,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="size-5" /></button>
               <h1 className="text-lg font-semibold truncate">{title}</h1>
             </div>
+            <LanguageSwitcher />
           </div>
         </header>
         <main className="flex-1 min-w-0">{children}</main>
