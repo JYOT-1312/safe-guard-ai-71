@@ -3,6 +3,9 @@ import { ShieldCheck, ScanLine, Mic, QrCode, MessageCircle, Building2, Phone, Sp
 import heroImage from "@/assets/hero-shield.jpg";
 import howImage from "@/assets/how-it-works.jpg";
 import { Logo } from "@/components/logo";
+import { LESSON_TOPICS } from "@/lib/lesson-videos";
+import { LessonVideoCard } from "@/components/lesson-video-card";
+
 
 export const Route = createFileRoute("/")({
   component: Landing,
