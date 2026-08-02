@@ -96,10 +96,8 @@ function Landing() {
       {/* Trust Stats */}
       <section className="bg-white py-16 md:py-20 border-y border-border">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 gap-8 lg:gap-12">
             {[
-              { v: "₹42Cr+", l: "Scams Prevented" },
-              { v: "500k+", l: "Active Users" },
               { v: "99.8%", l: "AI Accuracy" },
               { v: "24/7", l: "Real-time Monitoring" },
             ].map((s) => (
@@ -109,6 +107,7 @@ function Landing() {
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
