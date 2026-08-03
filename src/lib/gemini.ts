@@ -88,8 +88,8 @@ export async function geminiChat(opts: {
     });
     return result.response.text() ?? "";
   } catch (e) {
-    console.error(e);
-    throw e;
+    console.error("[gemini] generateContent failed", e);
+    throw new Error(AI_ERROR);
 }
 }
 
