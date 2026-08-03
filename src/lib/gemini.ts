@@ -7,7 +7,7 @@
  */
 import { GoogleGenerativeAI, type Part } from "@google/generative-ai";
 
-export const GEMINI_MODEL = "gemini-3.6-flash";
+export const GEMINI_MODEL = "gemini-2.5-flash";
 
 /** Generic, user-safe failure message (no provider details leaked). */
 export const AI_ERROR = "Unable to analyze. Please try again.";
