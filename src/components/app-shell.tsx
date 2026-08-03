@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, QrCode, BookOpen, GraduationCap, History, LogOut, Menu, X, User, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, MessageCircle, ScanLine, Mic, MessagesSquare, Mail, Link2, QrCode, BookOpen, GraduationCap, History, PhoneCall, LogOut, Menu, X, User, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ const baseNav = [
   { to: "/knowledge", label: "app.nav.knowledge", icon: BookOpen },
   { to: "/learn", label: "app.nav.learn", icon: GraduationCap },
   { to: "/history", label: "app.nav.history", icon: History },
+  { to: "/helpline", label: "app.nav.helpline", icon: PhoneCall },
   { to: "/profile", label: "app.nav.profile", icon: User },
 ] as const;
 
