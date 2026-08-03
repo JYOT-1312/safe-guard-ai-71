@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { AI_ERROR, GEMINI_MODEL, geminiChat, geminiTranscribe, type ChatMessage } from "./gemini";
+import { GEMINI_MODEL, geminiChat, geminiTranscribe, type ChatMessage } from "./gemini";
 
 const MODEL_CHAT = GEMINI_MODEL;
 
