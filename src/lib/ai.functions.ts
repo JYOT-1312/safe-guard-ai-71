@@ -1,10 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { AI_ERROR, GEMINI_MODEL, geminiChat, geminiTranscribe, type ChatMessage } from "./gemini";
 
-const GATEWAY_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const GATEWAY_STT = "https://ai.gateway.lovable.dev/v1/audio/transcriptions";
-const MODEL_CHAT = "google/gemini-3-flash-preview";
-const MODEL_STT = "openai/gpt-4o-mini-transcribe";
+const MODEL_CHAT = GEMINI_MODEL;
 
 const SYSTEM_PROMPT = `You are SurakshaSetu AI — a calm, warm digital banking safety companion for first-time Indian digital users.
 You help users identify UPI scams, phishing, fake loan apps, KYC fraud, QR fraud, and cyber threats.
@@ -52,22 +50,12 @@ type Analysis = {
   recommendedActions: string[];
 };
 
-async function callChat(body: unknown): Promise<string> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("Missing LOVABLE_API_KEY");
-  const res = await fetch(GATEWAY_CHAT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    if (res.status === 429) throw new Error("AI rate limit reached. Please try again shortly.");
-    if (res.status === 402) throw new Error("AI credits exhausted. Please add credits in the workspace.");
-    throw new Error(`AI gateway error ${res.status}: ${text.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "";
+async function callChat(body: {
+  model?: string;
+  messages: ChatMessage[];
+  temperature?: number;
+}): Promise<string> {
+  return geminiChat({ messages: body.messages, temperature: body.temperature, model: body.model });
 }
 
 function parseAnalysis(raw: string): Analysis {
@@ -142,39 +130,12 @@ export const analyzeAudio = createServerFn({ method: "POST" })
     language: z.string().max(8).optional(),
   }).parse(d))
   .handler(async ({ data }): Promise<Analysis & { transcript: string }> => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    // Decode data URL -> Blob
+    // Decode data URL -> base64 payload for Gemini audio understanding
     const m = /^data:([^;]+);base64,(.+)$/.exec(data.audioDataUrl);
     if (!m) throw new Error("Invalid audio payload");
     const mime = data.mimeType || m[1] || "audio/webm";
-    const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
-    const extMap: Record<string, string> = {
-      "audio/webm": "webm", "audio/mp4": "mp4", "audio/mpeg": "mp3", "audio/mp3": "mp3",
-      "audio/wav": "wav", "audio/x-wav": "wav", "audio/wave": "wav",
-      "audio/aac": "aac", "audio/m4a": "m4a", "audio/x-m4a": "m4a", "audio/ogg": "ogg",
-    };
-    const ext = extMap[mime.split(";")[0]] ?? "webm";
 
-    const form = new FormData();
-    form.append("model", MODEL_STT);
-    form.append("file", new Blob([bytes], { type: mime }), `recording.${ext}`);
-    if (data.language) form.append("language", data.language);
-
-    const sttRes = await fetch(GATEWAY_STT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}` },
-      body: form,
-    });
-    if (!sttRes.ok) {
-      const text = await sttRes.text().catch(() => "");
-      if (sttRes.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
-      if (sttRes.status === 402) throw new Error("AI credits exhausted.");
-      throw new Error(`Transcription failed ${sttRes.status}: ${text.slice(0, 200)}`);
-    }
-    const sttJson = await sttRes.json();
-    const transcript: string = String(sttJson.text ?? "").trim();
+    const transcript: string = await geminiTranscribe({ base64: m[2], mimeType: mime.split(";")[0], language: data.language });
     if (!transcript) {
       return {
         transcript: "",
