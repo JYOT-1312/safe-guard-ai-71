@@ -1,33 +1,49 @@
 /**
- * Google Gemini AI client.
+ * Google Gemini AI client — SERVER ONLY.
  *
- * The API key is read only from environment variables (VITE_GEMINI_API_KEY),
- * never hardcoded. All calls in this file run inside server functions, so the
- * key stays on the server and is never shipped to the browser.
+ * The API key is read from process.env.GEMINI_API_KEY *inside* each call, so it
+ * is never evaluated at module scope and never inlined into a client bundle.
+ * Never use a VITE_ prefixed key here: Vite inlines VITE_* into browser code.
  */
 import { GoogleGenerativeAI, type Part } from "@google/generative-ai";
 
 export const GEMINI_MODEL = "gemini-2.5-flash";
 
-/** Generic, user-safe failure message (no provider details leaked). */
+/** Generic, user-safe fallback message. */
 export const AI_ERROR = "Unable to analyze. Please try again.";
 
 function resolveApiKey(): string {
   const env = (typeof process !== "undefined" ? process.env : {}) as Record<string, string | undefined>;
-  let viteKey: string | undefined;
-  try {
-    viteKey = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
-      ?.VITE_GEMINI_API_KEY;
-  } catch {
-    viteKey = undefined;
+  const key = env["GEMINI_API_KEY"] ?? env["GOOGLE_GENERATIVE_AI_API_KEY"];
+  if (!key) {
+    console.error("[gemini] GEMINI_API_KEY is not configured on the server");
+    throw new Error("Gemini is not configured. Add a valid GEMINI_API_KEY.");
   }
-  const key = env.VITE_GEMINI_API_KEY ?? env.GEMINI_API_KEY ?? viteKey;
-  if (!key) throw new Error(AI_ERROR);
   return key;
 }
 
 function client() {
   return new GoogleGenerativeAI(resolveApiKey());
+}
+
+/** Map provider failures to actionable messages, log the raw error server-side. */
+export function toFriendlyError(e: unknown): Error {
+  const raw = e instanceof Error ? e.message : String(e);
+  console.error("[gemini] request failed:", raw);
+  const s = raw.toLowerCase();
+
+  if (s.includes("leaked")) return new Error("Invalid API key: this Gemini key was reported as leaked. Generate a new key and update GEMINI_API_KEY.");
+  if (s.includes("401") || s.includes("unauthenticated") || s.includes("access_token_type_unsupported") || s.includes("api key not valid") || s.includes("api_key_invalid")) {
+    return new Error("Invalid API key. Check GEMINI_API_KEY (it must be a Google AI Studio key starting with AIza, not an OAuth token).");
+  }
+  if (s.includes("permission") || s.includes("403")) return new Error("Gemini rejected this key (permission denied). Enable the Generative Language API for the key's project.");
+  if (s.includes("429") || s.includes("quota") || s.includes("rate limit")) return new Error("API quota exceeded. Wait a moment and try again.");
+  if (s.includes("400") || s.includes("invalid argument")) return new Error("Invalid request sent to Gemini.");
+  if (s.includes("404") || s.includes("not found")) return new Error("Requested Gemini model is unavailable.");
+  if (s.includes("503") || s.includes("overloaded") || s.includes("unavailable")) return new Error("Gemini is temporarily unavailable. Please retry.");
+  if (s.includes("fetch") || s.includes("network") || s.includes("timeout") || s.includes("econn")) return new Error("Network error reaching Gemini. Please retry.");
+  if (s.startsWith("gemini is not configured")) return e instanceof Error ? e : new Error(raw);
+  return new Error(AI_ERROR);
 }
 
 /** OpenAI-style content block used across the analyzers. */
@@ -88,9 +104,8 @@ export async function geminiChat(opts: {
     });
     return result.response.text() ?? "";
   } catch (e) {
-    console.error("[gemini] generateContent failed", e);
-    throw new Error(AI_ERROR);
-}
+    throw toFriendlyError(e);
+  }
 }
 
 /** Audio transcription via Gemini's native audio understanding. */
@@ -120,7 +135,6 @@ export async function geminiTranscribe(opts: {
     });
     return (result.response.text() ?? "").trim();
   } catch (e) {
-    console.error("[gemini] transcription failed", e);
-    throw new Error(AI_ERROR);
+    throw toFriendlyError(e);
   }
 }
