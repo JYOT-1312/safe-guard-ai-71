@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
+import { Route as ApiAnalyzeRouteImport } from './routes/api/analyze'
 import { Route as AuthenticatedVoiceDetectorRouteImport } from './routes/_authenticated/voice-detector'
 import { Route as AuthenticatedUrlAnalyzerRouteImport } from './routes/_authenticated/url-analyzer'
 import { Route as AuthenticatedScamDetectorRouteImport } from './routes/_authenticated/scam-detector'
@@ -58,6 +59,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth_/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAnalyzeRoute = ApiAnalyzeRouteImport.update({
+  id: '/api/analyze',
+  path: '/api/analyze',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedVoiceDetectorRoute =
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/api/analyze': typeof ApiAnalyzeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/api/analyze': typeof ApiAnalyzeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/_authenticated/scam-detector': typeof AuthenticatedScamDetectorRoute
   '/_authenticated/url-analyzer': typeof AuthenticatedUrlAnalyzerRoute
   '/_authenticated/voice-detector': typeof AuthenticatedVoiceDetectorRoute
+  '/api/analyze': typeof ApiAnalyzeRoute
   '/auth_/callback': typeof AuthCallbackRoute
   '/_authenticated/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
 }
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
+    | '/api/analyze'
     | '/auth/callback'
     | '/chat/$sessionId'
   fileRoutesByTo: FileRoutesByTo
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/scam-detector'
     | '/url-analyzer'
     | '/voice-detector'
+    | '/api/analyze'
     | '/auth/callback'
     | '/chat/$sessionId'
   id:
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scam-detector'
     | '/_authenticated/url-analyzer'
     | '/_authenticated/voice-detector'
+    | '/api/analyze'
     | '/auth_/callback'
     | '/_authenticated/chat/$sessionId'
   fileRoutesById: FileRoutesById
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAnalyzeRoute: typeof ApiAnalyzeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/analyze': {
+      id: '/api/analyze'
+      path: '/api/analyze'
+      fullPath: '/api/analyze'
+      preLoaderRoute: typeof ApiAnalyzeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/voice-detector': {
@@ -495,6 +515,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAnalyzeRoute: ApiAnalyzeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
