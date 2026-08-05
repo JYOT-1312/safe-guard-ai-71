@@ -108,10 +108,7 @@ export async function geminiChat(opts: {
     });
     return response.text ?? "";
   } catch (error) {
-    console.error("FULL GEMINI ERROR:");
-    console.error(error);
-
-    throw error;
+    throw toFriendlyError(error);
 }
 }
 
