@@ -63,17 +63,20 @@ export const Route = createFileRoute("/api/analyze")({
             return json({ ok: true, result: { summary: cleaned } });
           }
         } catch (e) {
-          const message = e instanceof Error ? e.message : "Internal server error";
+          const message = e instanceof Error ? e.message : "Internal AI error. Please try again.";
           console.error("[api/analyze]", e);
-          const status = /invalid api key|not configured|permission/i.test(message)
+          const status = /key missing|authentication failed|permission/i.test(message)
             ? 401
             : /quota/i.test(message)
               ? 429
-              : /unavailable|network/i.test(message)
+              : /unavailable|timeout|network/i.test(message)
                 ? 503
-                : 500;
+                : /invalid model|invalid image|invalid audio|unsupported format/i.test(message)
+                  ? 400
+                  : 500;
           return json({ ok: false, error: message }, status);
         }
+
       },
     },
   },
