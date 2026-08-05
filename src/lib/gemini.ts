@@ -1,6 +1,6 @@
 import { GoogleGenAI, type Content, type Part } from "@google/genai";
 
-export const GEMINI_MODEL = "gemini-3.5-flash";
+export const GEMINI_MODEL = " gemini-3.1-flash-lite";
 
 /** Text or multimodal content block accepted by geminiChat. */
 export type ContentBlock =
