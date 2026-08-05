@@ -107,8 +107,11 @@ export async function geminiChat(opts: {
     });
     return response.text ?? "";
   } catch (error) {
-    throw toFriendlyError(error);
-  }
+    console.error("FULL GEMINI ERROR:");
+    console.error(error);
+
+    throw error;
+}
 }
 
 /** Native Gemini audio understanding used for transcription. */
