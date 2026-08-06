@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listSessions, createSession } from "@/lib/chat-sessions";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/chat")({
+export const Route = createFileRoute("/_authenticated/chat/")({
   component: ChatIndex,
 });
 
