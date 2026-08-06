@@ -13,11 +13,18 @@ function ChatIndex() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({ queryKey: ["chat-sessions"], queryFn: listSessions });
 
+  const startedRef = useRef(false);
+
   useEffect(() => {
-    if (!data) return;
+    if (!data || startedRef.current) return;
+    startedRef.current = true;
     (async () => {
-      const target = data[0] ?? (await createSession());
-      navigate({ to: "/chat/$sessionId", params: { sessionId: target.id }, replace: true });
+      try {
+        const target = data[0] ?? (await createSession());
+        navigate({ to: "/chat/$sessionId", params: { sessionId: target.id }, replace: true });
+      } catch {
+        startedRef.current = false;
+      }
     })();
   }, [data, navigate]);
 
