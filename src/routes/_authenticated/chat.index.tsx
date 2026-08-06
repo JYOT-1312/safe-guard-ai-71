@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listSessions, createSession } from "@/lib/chat-sessions";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/chat")({
+export const Route = createFileRoute("/_authenticated/chat/")({
   component: ChatIndex,
 });
 
@@ -13,11 +13,18 @@ function ChatIndex() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({ queryKey: ["chat-sessions"], queryFn: listSessions });
 
+  const startedRef = useRef(false);
+
   useEffect(() => {
-    if (!data) return;
+    if (!data || startedRef.current) return;
+    startedRef.current = true;
     (async () => {
-      const target = data[0] ?? (await createSession());
-      navigate({ to: "/chat/$sessionId", params: { sessionId: target.id }, replace: true });
+      try {
+        const target = data[0] ?? (await createSession());
+        navigate({ to: "/chat/$sessionId", params: { sessionId: target.id }, replace: true });
+      } catch {
+        startedRef.current = false;
+      }
     })();
   }, [data, navigate]);
 

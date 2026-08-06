@@ -28,8 +28,8 @@ import { Route as AuthenticatedHelplineRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedEmailAnalyzerRouteImport } from './routes/_authenticated/email-analyzer'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatAnalyzerRouteImport } from './routes/_authenticated/chat-analyzer'
-import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatSessionIdRouteImport } from './routes/_authenticated/chat.$sessionId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -131,21 +131,21 @@ const AuthenticatedChatAnalyzerRoute =
     path: '/chat-analyzer',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatSessionIdRoute =
   AuthenticatedChatSessionIdRouteImport.update({
-    id: '/$sessionId',
-    path: '/$sessionId',
-    getParentRoute: () => AuthenticatedChatRoute,
+    id: '/chat/$sessionId',
+    path: '/chat/$sessionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -154,7 +154,6 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
@@ -170,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/api/analyze': typeof ApiAnalyzeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
+  '/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -177,7 +177,6 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
@@ -193,6 +192,7 @@ export interface FileRoutesByTo {
   '/api/analyze': typeof ApiAnalyzeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
+  '/chat': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -202,7 +202,6 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-analyzer': typeof AuthenticatedChatAnalyzerRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/email-analyzer': typeof AuthenticatedEmailAnalyzerRoute
@@ -218,6 +217,7 @@ export interface FileRoutesById {
   '/api/analyze': typeof ApiAnalyzeRoute
   '/auth_/callback': typeof AuthCallbackRoute
   '/_authenticated/chat/$sessionId': typeof AuthenticatedChatSessionIdRoute
+  '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,7 +227,6 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/reset-password'
     | '/admin'
-    | '/chat'
     | '/chat-analyzer'
     | '/dashboard'
     | '/email-analyzer'
@@ -243,6 +242,7 @@ export interface FileRouteTypes {
     | '/api/analyze'
     | '/auth/callback'
     | '/chat/$sessionId'
+    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -250,7 +250,6 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/reset-password'
     | '/admin'
-    | '/chat'
     | '/chat-analyzer'
     | '/dashboard'
     | '/email-analyzer'
@@ -266,6 +265,7 @@ export interface FileRouteTypes {
     | '/api/analyze'
     | '/auth/callback'
     | '/chat/$sessionId'
+    | '/chat'
   id:
     | '__root__'
     | '/'
@@ -274,7 +274,6 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/reset-password'
     | '/_authenticated/admin'
-    | '/_authenticated/chat'
     | '/_authenticated/chat-analyzer'
     | '/_authenticated/dashboard'
     | '/_authenticated/email-analyzer'
@@ -290,6 +289,7 @@ export interface FileRouteTypes {
     | '/api/analyze'
     | '/auth_/callback'
     | '/_authenticated/chat/$sessionId'
+    | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -437,13 +437,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatAnalyzerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/chat': {
-      id: '/_authenticated/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -451,30 +444,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chat/': {
+      id: '/_authenticated/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/$sessionId': {
       id: '/_authenticated/chat/$sessionId'
-      path: '/$sessionId'
+      path: '/chat/$sessionId'
       fullPath: '/chat/$sessionId'
       preLoaderRoute: typeof AuthenticatedChatSessionIdRouteImport
-      parentRoute: typeof AuthenticatedChatRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-interface AuthenticatedChatRouteChildren {
-  AuthenticatedChatSessionIdRoute: typeof AuthenticatedChatSessionIdRoute
-}
-
-const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
-  AuthenticatedChatSessionIdRoute: AuthenticatedChatSessionIdRoute,
-}
-
-const AuthenticatedChatRouteWithChildren =
-  AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAnalyzerRoute: typeof AuthenticatedChatAnalyzerRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmailAnalyzerRoute: typeof AuthenticatedEmailAnalyzerRoute
@@ -487,11 +475,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScamDetectorRoute: typeof AuthenticatedScamDetectorRoute
   AuthenticatedUrlAnalyzerRoute: typeof AuthenticatedUrlAnalyzerRoute
   AuthenticatedVoiceDetectorRoute: typeof AuthenticatedVoiceDetectorRoute
+  AuthenticatedChatSessionIdRoute: typeof AuthenticatedChatSessionIdRoute
+  AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAnalyzerRoute: AuthenticatedChatAnalyzerRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmailAnalyzerRoute: AuthenticatedEmailAnalyzerRoute,
@@ -504,6 +493,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScamDetectorRoute: AuthenticatedScamDetectorRoute,
   AuthenticatedUrlAnalyzerRoute: AuthenticatedUrlAnalyzerRoute,
   AuthenticatedVoiceDetectorRoute: AuthenticatedVoiceDetectorRoute,
+  AuthenticatedChatSessionIdRoute: AuthenticatedChatSessionIdRoute,
+  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
